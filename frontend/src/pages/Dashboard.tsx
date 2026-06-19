@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Droplet,
@@ -10,10 +10,14 @@ import {
 import { useSensorStream } from "../hooks/useSensorStream";
 import HeroBar from "../components/HeroBar";
 import ControlBar from "../components/ControlBar";
+import TabBar, { type TabId } from "../components/TabBar";
 import TimeSeriesPanel from "../components/TimeSeriesPanel";
 import DecisionFeed from "../components/DecisionFeed";
 import SensorGrid from "../components/SensorGrid";
 import KpiTile from "../components/KpiTile";
+import DecisionsTab from "./DecisionsTab";
+import RulesTab from "./RulesTab";
+import KnowledgeBaseTab from "./KnowledgeBaseTab";
 import { sensorMeta, sensorOrder } from "../theme";
 import clsx from "clsx";
 
@@ -28,6 +32,7 @@ function trendOf(arr: number[]): number {
 }
 
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const {
     currentResult,
     history,
@@ -42,10 +47,10 @@ export default function Dashboard() {
   } = useSensorStream(1500);
 
   useEffect(() => {
-    if (stepCount === 0) {
+    if (stepCount === 0 && activeTab === "dashboard") {
       step();
     }
-  }, []);
+  }, [activeTab]);
 
   const series = useMemo(() => {
     const map: Record<string, number[]> = {};
@@ -94,34 +99,38 @@ export default function Dashboard() {
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 space-y-5">
         <HeroBar current={currentResult} stepCount={stepCount} running={running} />
 
-        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-          <ControlBar
-            running={running}
-            loading={loading}
-            stepCount={stepCount}
-            speed={speed}
-            onToggle={toggle}
-            onStep={step}
-            onReset={reset}
-            onSpeedChange={setSpeed}
-          />
-          <div className="flex-1 hidden lg:block" />
-          {hasData && (
-            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
-              <span>engine live</span>
-              <span className="text-slate-700">·</span>
-              <span className="text-slate-400">no LLM in the loop</span>
-            </div>
-          )}
-        </div>
+        <TabBar active={activeTab} onChange={setActiveTab} />
 
-        {!hasData ? (
-          <EmptyState onStep={step} loading={loading} />
-        ) : (
+        {activeTab === "dashboard" && (
           <>
-            <section>
-              <SectionHeader
+            <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+              <ControlBar
+                running={running}
+                loading={loading}
+                stepCount={stepCount}
+                speed={speed}
+                onToggle={toggle}
+                onStep={step}
+                onReset={reset}
+                onSpeedChange={setSpeed}
+              />
+              <div className="flex-1 hidden lg:block" />
+              {hasData && (
+                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                  <span>engine live</span>
+                  <span className="text-slate-700">·</span>
+                  <span className="text-slate-400">no LLM in the loop</span>
+                </div>
+              )}
+            </div>
+
+            {!hasData ? (
+              <EmptyState onStep={step} loading={loading} />
+            ) : (
+              <>
+                <section>
+                  <SectionHeader
                 icon={Activity}
                 title="System KPIs"
                 subtitle="Composite health scores computed from sensor evaluations"
@@ -219,17 +228,23 @@ export default function Dashboard() {
               <ReasoningTrace latest={latest} />
             </section>
 
-            <footer className="pt-3 pb-6 text-center text-[11px] font-mono text-slate-600">
-              <span className="text-slate-500">expert-system</span>
-              <span className="text-slate-700 mx-2">·</span>
-              <span>rule-based engine</span>
-              <span className="text-slate-700 mx-2">·</span>
-              <span>knowledge base: {latest?.crop ?? "tomato"}</span>
-              <span className="text-slate-700 mx-2">·</span>
-              <span>stage: {latest?.growth_stage ?? "fruiting"}</span>
-            </footer>
+                <footer className="pt-3 pb-6 text-center text-[11px] font-mono text-slate-600">
+                  <span className="text-slate-500">expert-system</span>
+                  <span className="text-slate-700 mx-2">·</span>
+                  <span>rule-based engine</span>
+                  <span className="text-slate-700 mx-2">·</span>
+                  <span>knowledge base: {latest?.crop ?? "tomato"}</span>
+                  <span className="text-slate-700 mx-2">·</span>
+                  <span>stage: {latest?.growth_stage ?? "fruiting"}</span>
+                </footer>
+              </>
+            )}
           </>
         )}
+
+        {activeTab === "decisions" && <DecisionsTab />}
+        {activeTab === "rules" && <RulesTab />}
+        {activeTab === "knowledge" && <KnowledgeBaseTab />}
       </div>
     </div>
   );
