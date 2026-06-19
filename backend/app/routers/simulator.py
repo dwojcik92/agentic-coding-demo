@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas.decision import ExpertResult
 from app.schemas.sensor import SensorBatch
-from app.services.expert_service import evaluate_and_store, get_engine
+from app.services.expert_service import evaluate_and_store
+from app.services.rule_service import get_engine
 from app.services.simulator import SensorSimulator
 
 router = APIRouter(prefix="/api/v1/simulator", tags=["simulator"])
@@ -13,9 +14,8 @@ _simulator = SensorSimulator()
 
 
 @router.post("/step")
-async def simulation_step(
-    body: SensorBatch | None = None, db: AsyncSession = Depends(get_db)
-) -> ExpertResult:
+async def simulation_step(body: SensorBatch | None = None,
+                          db: AsyncSession = Depends(get_db)) -> ExpertResult:
     if body:
         sensor_data = body.readings
         growth_stage = body.growth_stage

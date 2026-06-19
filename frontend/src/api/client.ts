@@ -30,6 +30,28 @@ export function getRules(): Promise<Response> {
   return fetch(`${API_URL}/api/v1/rules`);
 }
 
+export function createRule(data: object): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/rules`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateRule(name: string, data: object): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/rules/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteRule(name: string): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/rules/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
 export function getKnowledgeBase(): Promise<Response> {
   return fetch(`${API_URL}/api/v1/knowledge-base`);
 }

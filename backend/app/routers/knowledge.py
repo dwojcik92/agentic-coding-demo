@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.expert_service import get_engine
+from app.core.database import get_db
+from app.services.rule_service import get_all_rules, create_rule, update_rule, delete_rule, get_engine
 
 router = APIRouter(prefix="/api/v1", tags=["knowledge"])
 
@@ -25,6 +27,32 @@ async def list_rules():
             },
         })
     return {"rules": output}
+
+
+@router.post("/rules", status_code=201)
+async def add_rule(data: dict, db: AsyncSession = Depends(get_db)):
+    engine = get_engine()
+    existing = [r for r in engine.rules if r.name == data.get("name")]
+    if existing:
+        raise HTTPException(409, f"Rule '{data['name']}' already exists")
+    result = await create_rule(db, data)
+    return result
+
+
+@router.put("/rules/{name}")
+async def edit_rule(name: str, data: dict, db: AsyncSession = Depends(get_db)):
+    result = await update_rule(db, name, data)
+    if result is None:
+        raise HTTPException(404, f"Rule '{name}' not found")
+    return result
+
+
+@router.delete("/rules/{name}")
+async def remove_rule(name: str, db: AsyncSession = Depends(get_db)):
+    deleted = await delete_rule(db, name)
+    if not deleted:
+        raise HTTPException(404, f"Rule '{name}' not found")
+    return {"message": f"Rule '{name}' deleted"}
 
 
 @router.get("/knowledge-base")

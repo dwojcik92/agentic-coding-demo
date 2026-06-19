@@ -3,21 +3,9 @@ import json
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.expert import ExpertEngine, KnowledgeBase
-from app.core.expert.rules import build_tomato_rules
 from app.models.decision import DecisionRecord
 from app.models.sensor_reading import SensorReading
-
-_engine: ExpertEngine | None = None
-
-
-def get_engine() -> ExpertEngine:
-    global _engine
-    if _engine is None:
-        kb = KnowledgeBase()
-        rules = build_tomato_rules()
-        _engine = ExpertEngine(kb, rules)
-    return _engine
+from app.services.rule_service import get_engine
 
 
 async def evaluate_and_store(

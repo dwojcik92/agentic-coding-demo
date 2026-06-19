@@ -1,25 +1,16 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Search, RotateCw, ChevronDown, Braces, type LucideIcon } from "lucide-react";
-import {
-  Droplets,
-  Leaf,
-  AlertTriangle,
-  Bug,
-  TrendingUp,
-  Eye,
-} from "lucide-react";
+import { BookOpen, Search, RotateCw, ChevronDown, Braces, Plus, Pencil, Trash2, type LucideIcon } from "lucide-react";
+import { Droplets, Leaf, AlertTriangle, Bug, TrendingUp, Eye } from "lucide-react";
 import clsx from "clsx";
-import { getRules } from "../api/client";
+import { getRules, createRule, updateRule, deleteRule } from "../api/client";
 import { decisionTypeConfig, decisionTypeOrder, priorityConfig, sensorMeta } from "../theme";
 import type { RuleDef } from "../types";
+import RuleEditor from "../components/RuleEditor";
+import type { FormData } from "../components/RuleEditor";
 
 const iconMap: Record<string, LucideIcon> = {
-  droplet: Droplets,
-  leaf: Leaf,
-  "alert-triangle": AlertTriangle,
-  bug: Bug,
-  "trending-up": TrendingUp,
-  eye: Eye,
+  droplet: Droplets, leaf: Leaf, "alert-triangle": AlertTriangle,
+  bug: Bug, "trending-up": TrendingUp, eye: Eye,
 };
 
 const opMap: Record<string, string> = {
@@ -32,6 +23,9 @@ export default function RulesTab() {
   const [search, setSearch] = useState("");
   const [groupBy, setGroupBy] = useState<"type" | "priority" | "none">("type");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<RuleDef | null>(null);
+  const [error, setError] = useState("");
 
   const fetchRules = async () => {
     setLoading(true);
@@ -53,6 +47,41 @@ export default function RulesTab() {
 
   const toggle = (name: string) => {
     setExpanded((p) => { const n = new Set(p); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+  };
+
+  const openNew = () => { setEditing(null); setEditorOpen(true); };
+  const openEdit = (r: RuleDef) => { setEditing(r); setEditorOpen(true); };
+
+  const handleSave = async (data: FormData) => {
+    const payload = {
+      name: data.name,
+      description: data.description,
+      decision_type: data.decision_type,
+      priority: data.priority,
+      action: data.action,
+      condition_operator: data.condition_operator,
+      conditions: data.conditions,
+    };
+    const res = editing
+      ? await updateRule(editing.name, payload)
+      : await createRule(payload);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || `HTTP ${res.status}`);
+    }
+    setEditorOpen(false);
+    await fetchRules();
+  };
+
+  const handleDelete = async (name: string) => {
+    if (!window.confirm(`Delete rule "${name}"?`)) return;
+    const res = await deleteRule(name);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.detail || `HTTP ${res.status}`);
+      return;
+    }
+    await fetchRules();
   };
 
   const grouped: Record<string, RuleDef[]> = {};
@@ -96,12 +125,7 @@ export default function RulesTab() {
             <button
               key={g}
               onClick={() => setGroupBy(g)}
-              className={clsx(
-                "px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all capitalize",
-                groupBy === g
-                  ? "bg-cyan-500/15 text-cyan-300"
-                  : "text-slate-400 hover:text-slate-200"
-              )}
+              className={clsx("px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all capitalize", groupBy === g ? "bg-cyan-500/15 text-cyan-300" : "text-slate-400 hover:text-slate-200")}
             >
               {g}
             </button>
@@ -114,7 +138,21 @@ export default function RulesTab() {
           <RotateCw className={clsx("w-3 h-3", loading && "animate-spin")} />
           Reload
         </button>
+        <button
+          onClick={openNew}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Rule
+        </button>
       </div>
+
+      {error && (
+        <div className="text-xs font-medium text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2 mb-4">
+          {error}
+          <button onClick={() => setError("")} className="ml-2 underline">Dismiss</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-slate-500">
@@ -125,6 +163,7 @@ export default function RulesTab() {
         <div className="flex flex-col items-center justify-center py-20 text-slate-500">
           <Braces className="w-8 h-8 mb-2" />
           <p className="text-sm font-medium">No rules match your search</p>
+          <button onClick={openNew} className="mt-3 text-xs text-cyan-400 hover:text-cyan-300">Create a new rule</button>
         </div>
       ) : (
         <div className="space-y-5 max-h-[600px] overflow-y-auto pr-1">
@@ -141,7 +180,7 @@ export default function RulesTab() {
                     <span style={{ color: decisionTypeConfig[key as keyof typeof decisionTypeConfig]?.color }}>
                       {decisionTypeConfig[key as keyof typeof decisionTypeConfig]?.label ?? key}
                     </span>
-                    <span className="text-slate-700 font-normal">({items.length} rules)</span>
+                    <span className="text-slate-700 font-normal">({items.length})</span>
                   </>
                 )}
               </h3>
@@ -165,7 +204,23 @@ export default function RulesTab() {
                           </div>
                           <p className="text-xs text-slate-400">{rule.description}</p>
                         </div>
-                        <ChevronDown className={clsx("w-3.5 h-3.5 text-slate-500 mt-1 flex-shrink-0 transition-transform", isOpen && "rotate-180")} />
+                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => openEdit(rule)}
+                            className="p-1.5 rounded-md text-slate-500 hover:text-cyan-300 hover:bg-slate-800/60 transition-all"
+                            title="Edit rule"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(rule.name)}
+                            className="p-1.5 rounded-md text-slate-500 hover:text-red-300 hover:bg-slate-800/60 transition-all"
+                            title="Delete rule"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                          <ChevronDown className={clsx("w-3.5 h-3.5 text-slate-500 ml-1 transition-transform", isOpen && "rotate-180")} />
+                        </div>
                       </button>
                       {isOpen && (
                         <div className="px-3 pb-3 border-t border-slate-800/60 pt-2 space-y-2">
@@ -195,6 +250,22 @@ export default function RulesTab() {
             </div>
           ))}
         </div>
+      )}
+
+      {editorOpen && (
+        <RuleEditor
+          initial={editing ? {
+            name: editing.name,
+            description: editing.description,
+            decision_type: editing.decision_type,
+            priority: editing.priority,
+            action: editing.action,
+            condition_operator: editing.condition.operator,
+            conditions: editing.condition.conditions.map((c) => ({ sensor: c.sensor, operator: c.operator, value: c.value })),
+          } : undefined}
+          onSave={handleSave}
+          onClose={() => setEditorOpen(false)}
+        />
       )}
     </div>
   );
