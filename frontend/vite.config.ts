@@ -6,5 +6,12 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: ["agent-demo.dwojcik.ovh"],
+    proxy: {
+      "/api": {
+        target: "http://backend:8000",
+        changeOrigin: true,
+      },
+    },
   },
 });
