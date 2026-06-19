@@ -47,3 +47,38 @@ export interface DecisionRecord {
   sensor_snapshot: string;
   timestamp: string;
 }
+
+export interface RuleDef {
+  name: string;
+  description: string;
+  decision_type: string;
+  priority: number;
+  action: string;
+  condition: {
+    operator: string;
+    conditions: { sensor: string; operator: string; value: number }[];
+  };
+}
+
+export interface RulesResponse {
+  rules: RuleDef[];
+}
+
+export interface KbSensor {
+  name: string;
+  unit: string;
+  description: string;
+}
+
+export interface KbThreshold {
+  min: number | null;
+  max: number | null;
+  optimal_min: number | null;
+  optimal_max: number | null;
+}
+
+export interface KnowledgeBaseResponse {
+  crop: string;
+  sensors: Record<string, KbSensor>;
+  growth_stages: Record<string, Record<string, KbThreshold>>;
+}
