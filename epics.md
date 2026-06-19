@@ -28,11 +28,17 @@
 - [x] GET /api/v1/sensors/{name}/readings — sensor history
 
 ## Epic 5: Frontend Dashboard
-- [x] Dashboard page with sensor time-series charts (Recharts)
-- [x] Current sensor status grid (color-coded)
-- [x] Decision cards grouped by type
-- [x] Step / Auto / Reset controls
-- [x] Explanation panels (expandable)
+- [x] Initial dashboard with sensor charts + decision cards
+- [x] STATE-OF-THE-ART UI REVAMP (current)
+- [x] Dark theme with glassmorphism panels and cyan accent
+- [x] Hero bar with health ring + urgency indicators
+- [x] KPI tiles (soil health, climate health, stress index, active decisions)
+- [x] Multi-sensor normalized time-series (all 7 sensors overlaid)
+- [x] Decision feed with priority chips + expandable reasoning
+- [x] Compact sensor grid with sparklines + trend indicators
+- [x] Control bar with stream/step/reset/speed controls
+- [x] Reasoning trace section showing all sensor evaluations
+- [x] Animations: slide-in for decisions, pulse for live data, shimmer
 
 ## Epic 6: Tests
 - [x] pytest: expert engine unit tests (KB, conditions, rules, engine)
