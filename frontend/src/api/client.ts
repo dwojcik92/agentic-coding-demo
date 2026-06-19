@@ -55,3 +55,44 @@ export function deleteRule(name: string): Promise<Response> {
 export function getKnowledgeBase(): Promise<Response> {
   return fetch(`${API_URL}/api/v1/knowledge-base`);
 }
+
+export function updateThreshold(stage: string, sensor: string, data: object): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/knowledge-base/thresholds/${encodeURIComponent(stage)}/${encodeURIComponent(sensor)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function createStage(stage: string, thresholds?: object): Promise<Response> {
+  const body = thresholds ? { thresholds } : {};
+  return fetch(`${API_URL}/api/v1/knowledge-base/stages/${encodeURIComponent(stage)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteStage(stage: string): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/knowledge-base/stages/${encodeURIComponent(stage)}`, { method: "DELETE" });
+}
+
+export function createSensor(name: string, unit: string, description: string): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/knowledge-base/sensors`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, unit, description }),
+  });
+}
+
+export function updateSensor(name: string, data: object): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/knowledge-base/sensors/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteSensor(name: string): Promise<Response> {
+  return fetch(`${API_URL}/api/v1/knowledge-base/sensors/${encodeURIComponent(name)}`, { method: "DELETE" });
+}

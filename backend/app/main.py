@@ -14,9 +14,12 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
 
     from app.services.rule_service import init_rules
+    from app.services.kb_service import init_kb, rebuild_engine_from_db
     session = get_async_session()
     async with session() as s:
+        await init_kb(s)
         await init_rules(s)
+        await rebuild_engine_from_db(s)
 
     yield
     await engine.dispose()

@@ -36,4 +36,20 @@ test.describe("Expert System Dashboard", () => {
     const pauseBtn = page.getByRole("button", { name: "Pause" });
     await expect(pauseBtn).toBeVisible();
   });
+
+  test("navigates to Rules tab and shows rules", async ({ page }) => {
+    await page.getByRole("button", { name: "Rules" }).click();
+    await expect(page.getByText("Rule Book")).toBeVisible();
+    await expect(page.getByText(/rules loaded/)).toBeVisible();
+  });
+
+  test("navigates to Knowledge Base tab", async ({ page }) => {
+    await page.getByRole("button", { name: "Knowledge Base" }).click();
+    await expect(page.getByText("Knowledge Base", { exact: true })).toBeVisible();
+  });
+
+  test("navigates to Decisions tab", async ({ page }) => {
+    await page.getByRole("button", { name: "Decisions" }).click();
+    await expect(page.getByText("Decision History")).toBeVisible();
+  });
 });

@@ -31,6 +31,14 @@ def rebuild_engine(db_rules: list[Rule]):
     set_engine(ExpertEngine(kb, rules))
 
 
+async def rebuild_engine_with_kb(kb: KnowledgeBase, db: AsyncSession):
+    from app.models.rule_model import RuleModel
+    result = await db.execute(select(RuleModel))
+    rows = result.scalars().all()
+    rules = [_deserialize_rule(r) for r in rows] if rows else build_tomato_rules()
+    set_engine(ExpertEngine(kb, rules))
+
+
 def _deserialize_rule(row: RuleModel) -> Rule:
     conds = json.loads(row.conditions)
     rule = Rule(
